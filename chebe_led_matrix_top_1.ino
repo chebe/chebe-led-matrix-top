@@ -4,7 +4,7 @@
   by chebe, 30th April 2010
   license:  Creative Commons Attribution-NonCommercial 3.0
   
-  Version 1;  NxN LED matrix with push button
+  Version 1;  MxN LED matrix with push button (set-up as 7x7)
               Controls LEDs; on/off
               Push button; cycles through patterns
               
@@ -22,7 +22,9 @@
 //#define DEBUG  1
 
 // -- CHANGE THESE VALUES IF USING DIFFERENT CIRCUIT LAYOUT --
-int NUM_LEDS = 7; //assumption; nxn matrix
+//NxN matrix
+int NUM_COLS = 7; // num of columns
+int NUM_ROWS = 7; // num of rows
 int MIN_DELAY = 1;
 int MAX_DELAY = 10;
 int ledDelay = MIN_DELAY; 
@@ -30,6 +32,9 @@ int ledDelay = MIN_DELAY;
 //thread less conductive, now 1 = constant, 10 = chasing
 
 // -- LEDS --
+// Make sure you have as many rowNs and colNs as
+// defined in NUM_LEDS/NUM_COLS/NUM_ROWS
+// And make adjustments to setup(), allOn(), allOff()
 int row0 = 18;     //analog pin4
 int row1 = 17;     //analog pin3
 int row2 = 16;     //analog pin2
@@ -45,13 +50,17 @@ int column4 = 7;   //digital pin7
 int column5 = 6;   //digital pin6
 int column6 = 5;   //digital pin5 
 
+int ledPosArray[] = {row0, row1, row2, row3, row4, row5, row6};
+int ledNegArray[] = {column0, column1, column2, column3, column4, column5, column6};
+
 // -- SWITCH --
 // push button connected to digital pin 4
 int switchPin = 4;
 //constant, for number of patterns available
 int NUM_PATTERNS = 2;
-
+ 
 // -- END OF NEEDED CHANGES IF USING DIFFERENT CIRCUIT LAYOUT --
+
 
 // a variable to keep track of when switch is pressed
 int switchValue;
@@ -186,19 +195,24 @@ void allOn()
 // Turn on one specified LED
 void on(int row, int column)
 {
-  row = rangeCheck(row);
-  column = rangeCheck(column);
-  digitalWrite(row, HIGH);
-  digitalWrite(column, LOW);
+  #ifdef DEBUG
+  Serial.print(row);
+  Serial.print(" | ");
+  Serial.println(column);
+  #endif
+  row = rangeCheckRows(row);
+  column = rangeCheckCols(column);
+  digitalWrite(ledPosArray[row], HIGH);
+  digitalWrite(ledNegArray[column], LOW);
 }
 
 // Turn off one specified LED
 void off(int row, int column)
 {
-  row = rangeCheck(row);
-  column = rangeCheck(column);
-  digitalWrite(row, LOW);
-  digitalWrite(column, HIGH);
+  row = rangeCheckRows(row);
+  column = rangeCheckCols(column);
+  digitalWrite(ledPosArray[row], LOW);
+  digitalWrite(ledNegArray[column], HIGH);
 }
 
 // Makes sure turning on/off LED
@@ -207,15 +221,34 @@ void off(int row, int column)
 //  cycle back to 0
 // if less than 0,
 //  cylce around to max LED
-int rangeCheck(int place)
+int rangeCheckRows(int place)
 {
-  if(place >= NUM_LEDS)
+  if(place >= NUM_ROWS)
   {
     place = 0;
   }
   else if(place < 0)
   {
-    place = NUM_LEDS -1;
+    place = NUM_ROWS -1;
+  }
+  return place;
+}
+
+// Makes sure turning on/off LED
+// that actually exists
+// if greater than num of LEDs,
+//  cycle back to 0
+// if less than 0,
+//  cylce around to max LED
+int rangeCheckCols(int place)
+{
+  if(place >= NUM_COLS)
+  {
+    place = 0;
+  }
+  else if(place < 0)
+  {
+    place = NUM_COLS -1;
   }
   return place;
 }
@@ -233,5 +266,9 @@ void incrementPressCount()
   {
     numOfPresses = 0;
   }
+  #ifdef DEBUG
+  Serial.print("> ");
+  Serial.println(numOfPresses);
+  #endif
 }
 
